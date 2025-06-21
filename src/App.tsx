@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Download, BookOpen, Star, Filter, Heart, User, Clock } from 'lucide-react';
+import coverImg from './assets/cover.png';
+import solutionPdf from './assets/Solution 1.pdf';
 
 interface Book {
   id: number;
@@ -8,6 +10,7 @@ interface Book {
   genre: string;
   description: string;
   coverUrl: string;
+  fileUrl: string;
   rating: number;
   downloads: number;
   fileSize: string;
@@ -19,88 +22,89 @@ interface Book {
 const sampleBooks: Book[] = [
   {
     id: 1,
-    title: "Le Petit Prince",
-    author: "Antoine de Saint-Exupéry",
-    genre: "Fiction",
-    description: "Une histoire poétique et philosophique sur l'amitié, l'amour et la quête de sens à travers les yeux d'un petit prince venu d'une autre planète.",
-    coverUrl: "https://images.pexels.com/photos/1130980/pexels-photo-1130980.jpeg",
+    title: "Tu es une solution de Dieu pour ta génération",
+    author: "Samuel M. Dalum",
+    genre: "Développement personnel chrétien / Littérature chrétienne pour la jeunesse",
+    description: "Ce livre est un appel prophétique à une génération en quête de sens. Il s'adresse en particulier aux jeunes, souvent désorientés ou blessés, en les appelant à se reconnecter à leur identité divine et à leur mission spirituelle. L'auteur partage un message puissant de réveil, de restauration et d’engagement à travers une écriture accessible, profonde et inspirée de la Bible. Il ne s'agit pas d’un simple ouvrage religieux, mais d’un véritable guide pour ceux qui veulent marcher avec Dieu avec authenticité, feu et impact dans leur génération.",
+    coverUrl: coverImg,
+    fileUrl: solutionPdf,
     rating: 4.8,
-    downloads: 15420,
-    fileSize: "2.1 MB",
-    pages: 96,
-    publishYear: 1943,
+    downloads: 154,
+    fileSize: "458 Ko",
+    pages: 58,
+    publishYear: 2025,
     isFavorite: false
   },
-  {
-    id: 2,
-    title: "1984",
-    author: "George Orwell",
-    genre: "Science-Fiction",
-    description: "Un roman dystopique qui explore les thèmes de la surveillance, de la manipulation et du totalitarisme dans une société futuriste oppressive.",
-    coverUrl: "https://images.pexels.com/photos/1029141/pexels-photo-1029141.jpeg",
-    rating: 4.7,
-    downloads: 23180,
-    fileSize: "3.4 MB",
-    pages: 328,
-    publishYear: 1949,
-    isFavorite: true
-  },
-  {
-    id: 3,
-    title: "L'Étranger",
-    author: "Albert Camus",
-    genre: "Philosophie",
-    description: "L'histoire de Meursault, un homme indifférent qui commet un meurtre apparemment sans motif, explorant l'absurdité de l'existence.",
-    coverUrl: "https://images.pexels.com/photos/1370295/pexels-photo-1370295.jpeg",
-    rating: 4.5,
-    downloads: 18750,
-    fileSize: "1.8 MB",
-    pages: 159,
-    publishYear: 1942,
-    isFavorite: false
-  },
-  {
-    id: 4,
-    title: "Pride and Prejudice",
-    author: "Jane Austen",
-    genre: "Romance",
-    description: "L'histoire d'Elizabeth Bennet et de Mr. Darcy, une comédie romantique sur l'amour, les préjugés et les conventions sociales de l'époque.",
-    coverUrl: "https://images.pexels.com/photos/1261180/pexels-photo-1261180.jpeg",
-    rating: 4.6,
-    downloads: 31200,
-    fileSize: "4.2 MB",
-    pages: 432,
-    publishYear: 1813,
-    isFavorite: true
-  },
-  {
-    id: 5,
-    title: "Les Misérables",
-    author: "Victor Hugo",
-    genre: "Historique",
-    description: "Une fresque épique de la France du XIXe siècle, suivant Jean Valjean dans sa quête de rédemption à travers les bouleversements sociaux.",
-    coverUrl: "https://images.pexels.com/photos/1309899/pexels-photo-1309899.jpeg",
-    rating: 4.9,
-    downloads: 27800,
-    fileSize: "8.7 MB",
-    pages: 1463,
-    publishYear: 1862,
-    isFavorite: false
-  },
-  {
-    id: 6,
-    title: "To Kill a Mockingbird",
-    author: "Harper Lee",
-    genre: "Fiction",
-    description: "L'histoire de Scout Finch et de son père avocat Atticus, explorant les thèmes du racisme et de la justice dans le Sud américain.",
-    coverUrl: "https://images.pexels.com/photos/1181533/pexels-photo-1181533.jpeg",
-    rating: 4.8,
-    downloads: 19500,
-    fileSize: "3.1 MB",
-    pages: 376,
-    publishYear: 1960,
-    isFavorite: false
-  }
+  // {
+  //   id: 2,
+  //   title: "1984",
+  //   author: "George Orwell",
+  //   genre: "Science-Fiction",
+  //   description: "Un roman dystopique qui explore les thèmes de la surveillance, de la manipulation et du totalitarisme dans une société futuriste oppressive.",
+  //   coverUrl: "https://images.pexels.com/photos/1029141/pexels-photo-1029141.jpeg",
+  //   rating: 4.7,
+  //   downloads: 23180,
+  //   fileSize: "3.4 MB",
+  //   pages: 328,
+  //   publishYear: 1949,
+  //   isFavorite: true
+  // },
+  // {
+  //   id: 3,
+  //   title: "L'Étranger",
+  //   author: "Albert Camus",
+  //   genre: "Philosophie",
+  //   description: "L'histoire de Meursault, un homme indifférent qui commet un meurtre apparemment sans motif, explorant l'absurdité de l'existence.",
+  //   coverUrl: "https://images.pexels.com/photos/1370295/pexels-photo-1370295.jpeg",
+  //   rating: 4.5,
+  //   downloads: 18750,
+  //   fileSize: "1.8 MB",
+  //   pages: 159,
+  //   publishYear: 1942,
+  //   isFavorite: false
+  // },
+  // {
+  //   id: 4,
+  //   title: "Pride and Prejudice",
+  //   author: "Jane Austen",
+  //   genre: "Romance",
+  //   description: "L'histoire d'Elizabeth Bennet et de Mr. Darcy, une comédie romantique sur l'amour, les préjugés et les conventions sociales de l'époque.",
+  //   coverUrl: "https://images.pexels.com/photos/1261180/pexels-photo-1261180.jpeg",
+  //   rating: 4.6,
+  //   downloads: 31200,
+  //   fileSize: "4.2 MB",
+  //   pages: 432,
+  //   publishYear: 1813,
+  //   isFavorite: true
+  // },
+  // {
+  //   id: 5,
+  //   title: "Les Misérables",
+  //   author: "Victor Hugo",
+  //   genre: "Historique",
+  //   description: "Une fresque épique de la France du XIXe siècle, suivant Jean Valjean dans sa quête de rédemption à travers les bouleversements sociaux.",
+  //   coverUrl: "https://images.pexels.com/photos/1309899/pexels-photo-1309899.jpeg",
+  //   rating: 4.9,
+  //   downloads: 27800,
+  //   fileSize: "8.7 MB",
+  //   pages: 1463,
+  //   publishYear: 1862,
+  //   isFavorite: false
+  // },
+  // {
+  //   id: 6,
+  //   title: "To Kill a Mockingbird",
+  //   author: "Harper Lee",
+  //   genre: "Fiction",
+  //   description: "L'histoire de Scout Finch et de son père avocat Atticus, explorant les thèmes du racisme et de la justice dans le Sud américain.",
+  //   coverUrl: "https://images.pexels.com/photos/1181533/pexels-photo-1181533.jpeg",
+  //   rating: 4.8,
+  //   downloads: 19500,
+  //   fileSize: "3.1 MB",
+  //   pages: 376,
+  //   publishYear: 1960,
+  //   isFavorite: false
+  // }
 ];
 
 function App() {
@@ -123,22 +127,31 @@ function App() {
     });
   }, [books, searchTerm, selectedGenre]);
 
-  const handleDownload = async (bookId: number) => {
-    setDownloadingBooks(prev => new Set([...prev, bookId]));
-    
-    // Simulate download
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setDownloadingBooks(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(bookId);
-      return newSet;
-    });
+  const handleDownload = (bookId: number) => {
+    const bookToDownload = books.find(book => book.id === bookId);
+    if (!bookToDownload) {
+      return;
+    }
 
-    // Update download count
-    setBooks(prev => prev.map(book => 
-      book.id === bookId ? { ...book, downloads: book.downloads + 1 } : book
-    ));
+    setDownloadingBooks(prev => new Set([...prev, bookId]));
+
+    const link = document.createElement('a');
+    link.href = bookToDownload.fileUrl;
+    link.setAttribute('download', `${bookToDownload.title}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setTimeout(() => {
+      setDownloadingBooks(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(bookId);
+        return newSet;
+      });
+      setBooks(prev => prev.map(book =>
+        book.id === bookId ? { ...book, downloads: book.downloads + 1 } : book
+      ));
+    }, 2000);
   };
 
   const toggleFavorite = (bookId: number) => {
