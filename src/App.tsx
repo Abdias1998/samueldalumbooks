@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { Search, Download, BookOpen, Star, Filter, Heart, User, Clock } from 'lucide-react';
 import coverImg from './assets/cover.png';
@@ -116,41 +116,76 @@ function App() {
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      // Fetch the current download count for book with id 1
-      const { data: initialData, error } = await supabase
-        .from('books')
-        .select('download_count')
-        .eq('id', 1)
-        .single();
-
-      let data = initialData;
-
-      // If the row doesn't exist, create it
-      if (error && error.code === 'PGRST116') {
-        console.log('Book not found, creating initial entry...');
-        const { data: newData, error: insertError } = await supabase
+      try {
+        // Try to fetch the current download count from the database
+        let data;
+        
+        // First try to get existing data
+        const result = await supabase
           .from('books')
-          .insert({ id: 1, download_count: 0 })
           .select('download_count')
+          .eq('id', 1)
           .single();
+        
+        data = result.data;
+        const error = result.error;
 
-        if (insertError) {
-          console.error('Error creating book entry:', insertError);
+        // If the book doesn't exist in the database, create it with 0 downloads
+        if (error && error.code === 'PGRST116') {
+          console.log('Book not found, creating initial entry...');
+          const { data: newData, error: insertError } = await supabase
+            .from('books')
+            .insert({ id: 1, download_count: 0 })
+            .select('download_count')
+            .single();
+
+          if (insertError) {
+            console.error('Error creating book entry:', insertError);
+            // Fall back to local storage if database operation fails
+            const localDownloads = localStorage.getItem('book_1_downloads');
+            if (localDownloads) {
+              setBooks(prevBooks =>
+                prevBooks.map(book =>
+                  book.id === 1 ? { ...book, downloads: parseInt(localDownloads) } : book
+                )
+              );
+            }
+            return;
+          }
+          data = newData;
+        } else if (error) {
+          console.error('Error fetching download count:', error);
+          // Fall back to local storage if database fetch fails
+          const localDownloads = localStorage.getItem('book_1_downloads');
+          if (localDownloads) {
+            setBooks(prevBooks =>
+              prevBooks.map(book =>
+                book.id === 1 ? { ...book, downloads: parseInt(localDownloads) } : book
+              )
+            );
+          }
           return;
         }
-        data = newData;
-      } else if (error) {
-        console.error('Error fetching download count:', error);
-        return;
-      }
 
-      // Update the state with the fetched or newly created count
-      if (data) {
-        setBooks(prevBooks =>
-          prevBooks.map(book =>
-            book.id === 1 ? { ...book, downloads: data.download_count } : book
-          )
-        );
+        // Update the state with the fetched or newly created count
+        if (data) {
+          setBooks(prevBooks =>
+            prevBooks.map(book =>
+              book.id === 1 ? { ...book, downloads: data.download_count } : book
+            )
+          );
+        }
+      } catch (err) {
+        console.error('Unexpected error:', err);
+        // Fall back to local storage for any unexpected errors
+        const localDownloads = localStorage.getItem('book_1_downloads');
+        if (localDownloads) {
+          setBooks(prevBooks =>
+            prevBooks.map(book =>
+              book.id === 1 ? { ...book, downloads: parseInt(localDownloads) } : book
+            )
+          );
+        }
       }
     };
 
@@ -171,41 +206,57 @@ function App() {
     });
   }, [books, searchTerm, selectedGenre]);
 
-  const handleDownload = async (bookId: number) => {
-    const bookToDownload = books.find(book => book.id === bookId);
-    if (!bookToDownload) {
-      return;
-    }
-
-    setDownloadingBooks(prev => new Set([...prev, bookId]));
+  const handleDownload = async (bookId: number, fileUrl: string) => {
+    // Start the loading indicator
+    setDownloadingBooks(prev => new Set(prev).add(bookId));
 
     // Trigger the actual file download
     const link = document.createElement('a');
-    link.href = bookToDownload.fileUrl;
-    link.setAttribute('download', `${bookToDownload.title}.pdf`);
+    link.href = fileUrl;
+    link.download = fileUrl.split('/').pop() || 'download';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
-    // Call the database function to increment the count
-    const { error } = await supabase.rpc('increment_download_count', {
-      book_id_to_update: bookId,
-    });
+    try {
+      // Try to update the download count in the database
+      const { error } = await supabase.rpc('increment_download_count', {
+        book_id_to_update: bookId,
+      });
 
-    // Stop the loading indicator
-    setDownloadingBooks(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(bookId);
-      return newSet;
-    });
-
-    if (error) {
-      console.error('Error incrementing download count:', error);
-    } else {
-      // Update the local state to show the new count
+      if (error) {
+        console.error('Error incrementing download count in database:', error);
+        // Fall back to local storage if database update fails
+        const localDownloads = parseInt(localStorage.getItem(`book_${bookId}_downloads`) || '0') + 1;
+        localStorage.setItem(`book_${bookId}_downloads`, localDownloads.toString());
+        
+        // Update the UI with the new count from local storage
+        setBooks(prev => prev.map(book =>
+          book.id === bookId ? { ...book, downloads: localDownloads } : book
+        ));
+      } else {
+        // Update the local state to show the new count from database
+        setBooks(prev => prev.map(book =>
+          book.id === bookId ? { ...book, downloads: book.downloads + 1 } : book
+        ));
+      }
+    } catch (err) {
+      console.error('Unexpected error during download count update:', err);
+      // Fall back to local storage for any unexpected errors
+      const localDownloads = parseInt(localStorage.getItem(`book_${bookId}_downloads`) || '0') + 1;
+      localStorage.setItem(`book_${bookId}_downloads`, localDownloads.toString());
+      
+      // Update the UI with the new count from local storage
       setBooks(prev => prev.map(book =>
-        book.id === bookId ? { ...book, downloads: book.downloads + 1 } : book
+        book.id === bookId ? { ...book, downloads: localDownloads } : book
       ));
+    } finally {
+      // Always stop the loading indicator
+      setDownloadingBooks(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(bookId);
+        return newSet;
+      });
     }
   };
 
@@ -351,7 +402,7 @@ function App() {
                 </div>
 
                 <button
-                  onClick={() => handleDownload(book.id)}
+                  onClick={() => handleDownload(book.id, book.fileUrl)}
                   disabled={downloadingBooks.has(book.id)}
                   className={`w-full py-3 px-4 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center space-x-2 ${
                     downloadingBooks.has(book.id)
